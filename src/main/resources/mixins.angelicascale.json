@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8.3-GTNH",
+  "package": "com.rickg.angelicascale.mixin",
+  "refmap": "mixins.angelicascale.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": [
+    "MixinEntityRenderer",
+    "MixinFixedFunctionWorldRenderingPipeline"
+  ],
+  "server": []
+}

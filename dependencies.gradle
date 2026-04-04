@@ -34,5 +34,9 @@
  * For more details, see https://docs.gradle.org/8.0.1/userguide/java_library_plugin.html#sec:java_library_configurations_graph
  */
 dependencies {
+    compileOnly("com.github.GTNewHorizons:Angelica:1.0.0-beta66b:dev")
+    runtimeOnlyNonPublishable("io.github.legacymoddingmc:unimixins:0.1.22:dev")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:GTNHLib:0.7.10:dev")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:Angelica:1.0.0-beta66b:dev")
     //runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
 }
