@@ -3,7 +3,7 @@
 	"modList": [{
 		"modid": "${modId}",
 		"name": "${modName}",
-		"description": "An Angelica addon that renders the 3D world at a lower resolution while keeping the GUI native.",
+		"description": "An Angelica addon that lowers 3D world render resolution to improve performance.",
 		"version": "${modVersion}",
 		"mcversion": "${minecraftVersion}",
 		"url": "https://github.com/rickgcn/AngelicaScale",
