@@ -2,16 +2,16 @@ package com.rickg.angelicascale.client;
 
 import java.lang.reflect.Method;
 
-import com.rickg.angelicascale.AngelicaScaleMod;
-import com.rickg.angelicascale.Config;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.client.shader.ShaderGroup;
-import net.minecraft.client.renderer.OpenGlHelper;
 
 import org.lwjgl.opengl.GL11;
+
+import com.rickg.angelicascale.AngelicaScaleMod;
+import com.rickg.angelicascale.Config;
 
 public final class RenderHookState {
 
@@ -79,9 +79,8 @@ public final class RenderHookState {
 
         if (!loggedEnabled) {
             loggedEnabled = true;
-            AngelicaScaleMod.LOG.info(
-                "World render scaling active at {}x (GUI stays native resolution).",
-                Config.worldRenderScale);
+            AngelicaScaleMod.LOG
+                .info("World render scaling active at {}x (GUI stays native resolution).", Config.worldRenderScale);
         }
     }
 
@@ -91,7 +90,8 @@ public final class RenderHookState {
         }
 
         Minecraft mc = Minecraft.getMinecraft();
-        mc.getFramebuffer().bindFramebuffer(false);
+        mc.getFramebuffer()
+            .bindFramebuffer(false);
         setViewport(0, 0, mc.displayWidth, mc.displayHeight);
         scaledWorldFramebuffer.framebufferRender(mc.displayWidth, mc.displayHeight);
 
@@ -101,7 +101,9 @@ public final class RenderHookState {
     }
 
     public static boolean rebindScaledWorldFramebufferForFixedPipeline() {
-        if (!renderOverrideActive || scaledWorldFramebuffer == null || scaledViewportWidth <= 0 || scaledViewportHeight <= 0) {
+        if (!renderOverrideActive || scaledWorldFramebuffer == null
+            || scaledViewportWidth <= 0
+            || scaledViewportHeight <= 0) {
             return false;
         }
 
@@ -154,15 +156,15 @@ public final class RenderHookState {
             if (!angelicaViewportLookupAttempted) {
                 angelicaViewportLookupAttempted = true;
                 Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
-                angelicaGlViewport = glStateManagerClass.getMethod("glViewport", int.class, int.class, int.class, int.class);
+                angelicaGlViewport = glStateManagerClass
+                    .getMethod("glViewport", int.class, int.class, int.class, int.class);
             }
 
             if (angelicaGlViewport != null) {
                 angelicaGlViewport.invoke(null, x, y, width, height);
                 return;
             }
-        } catch (ClassNotFoundException ignored) {
-        } catch (ReflectiveOperationException e) {
+        } catch (ClassNotFoundException ignored) {} catch (ReflectiveOperationException e) {
             if (!loggedViewportFallback) {
                 loggedViewportFallback = true;
                 AngelicaScaleMod.LOG.debug("Falling back to raw GL11 viewport updates.", e);

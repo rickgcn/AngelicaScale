@@ -26,6 +26,7 @@ public class AngelicaScaleOptionsStorage implements OptionStorage<AngelicaScaleO
     }
 
     public static class Data {
+
         public boolean worldRenderScalingEnabled;
         public int worldRenderScalePercent;
     }

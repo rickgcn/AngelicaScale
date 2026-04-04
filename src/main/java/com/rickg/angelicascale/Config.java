@@ -27,13 +27,14 @@ public class Config {
             enableWorldRenderScaling,
             "Enable low-resolution world rendering. GUI remains full resolution.");
 
-        worldRenderScale = configuration.get(
-            Configuration.CATEGORY_GENERAL,
-            "worldRenderScale",
-            worldRenderScale,
-            "Scale factor for 3D world rendering only. 1.0 keeps native resolution.",
-            MIN_WORLD_RENDER_SCALE,
-            MAX_WORLD_RENDER_SCALE)
+        worldRenderScale = configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "worldRenderScale",
+                worldRenderScale,
+                "Scale factor for 3D world rendering only. 1.0 keeps native resolution.",
+                MIN_WORLD_RENDER_SCALE,
+                MAX_WORLD_RENDER_SCALE)
             .getDouble(worldRenderScale);
 
         if (configuration.hasChanged()) {
@@ -58,20 +59,22 @@ public class Config {
             configuration = new Configuration(configurationFile);
         }
 
-        configuration.get(
-            Configuration.CATEGORY_GENERAL,
-            "enableWorldRenderScaling",
-            enableWorldRenderScaling,
-            "Enable low-resolution world rendering. GUI remains full resolution.")
+        configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "enableWorldRenderScaling",
+                enableWorldRenderScaling,
+                "Enable low-resolution world rendering. GUI remains full resolution.")
             .set(enableWorldRenderScaling);
 
-        configuration.get(
-            Configuration.CATEGORY_GENERAL,
-            "worldRenderScale",
-            worldRenderScale,
-            "Scale factor for 3D world rendering only. 1.0 keeps native resolution.",
-            MIN_WORLD_RENDER_SCALE,
-            MAX_WORLD_RENDER_SCALE)
+        configuration
+            .get(
+                Configuration.CATEGORY_GENERAL,
+                "worldRenderScale",
+                worldRenderScale,
+                "Scale factor for 3D world rendering only. 1.0 keeps native resolution.",
+                MIN_WORLD_RENDER_SCALE,
+                MAX_WORLD_RENDER_SCALE)
             .set(worldRenderScale);
 
         if (configuration.hasChanged()) {
@@ -84,7 +87,8 @@ public class Config {
     }
 
     public static int getScaledDimension(int originalDimension) {
-        return Math.max(1, Math.min(originalDimension, (int) Math.round(originalDimension * clampScale(worldRenderScale))));
+        return Math
+            .max(1, Math.min(originalDimension, (int) Math.round(originalDimension * clampScale(worldRenderScale))));
     }
 
     public static double getMinWorldRenderScale() {
