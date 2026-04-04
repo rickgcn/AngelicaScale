@@ -35,7 +35,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Build
-        run: ./gradlew spotlessCheck build --stacktrace
+        run: bash ./gradlew spotlessCheck build --stacktrace
 
       - name: Upload artifacts
         if: always()

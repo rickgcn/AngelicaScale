@@ -33,7 +33,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Build release artifacts
-        run: ./gradlew build --stacktrace
+        run: bash ./gradlew build --stacktrace
 
       - name: Publish GitHub Release
         env:
