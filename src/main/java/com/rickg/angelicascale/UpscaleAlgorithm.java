@@ -1,8 +1,9 @@
 package com.rickg.angelicascale;
 
+import me.jellysquid.mods.sodium.client.gui.options.named.NamedState;
 import net.minecraft.util.StatCollector;
 
-public enum UpscaleAlgorithm {
+public enum UpscaleAlgorithm implements NamedState {
 
     NEAREST("Nearest", "angelicascale.algorithm.nearest"),
     LINEAR("Linear", "angelicascale.algorithm.linear"),
@@ -19,6 +20,11 @@ public enum UpscaleAlgorithm {
     public String getDisplayName() {
         String translated = StatCollector.translateToLocal(this.translationKey);
         return this.translationKey.equals(translated) ? this.legacyDisplayName : translated;
+    }
+
+    @Override
+    public String getKey() {
+        return this.translationKey;
     }
 
     @Override
