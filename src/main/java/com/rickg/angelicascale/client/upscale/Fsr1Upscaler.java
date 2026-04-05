@@ -46,7 +46,8 @@ public final class Fsr1Upscaler {
         }
     }
 
-    public boolean render(Framebuffer sourceFramebuffer, Framebuffer outputFramebuffer, int outputWidth, int outputHeight) {
+    public boolean render(Framebuffer sourceFramebuffer, Framebuffer outputFramebuffer, int outputWidth,
+        int outputHeight) {
         if (!this.ensureSupport()) {
             return false;
         }
@@ -90,7 +91,8 @@ public final class Fsr1Upscaler {
         }
     }
 
-    private void renderEasuPass(Framebuffer sourceFramebuffer, Framebuffer targetFramebuffer, int outputWidth, int outputHeight) {
+    private void renderEasuPass(Framebuffer sourceFramebuffer, Framebuffer targetFramebuffer, int outputWidth,
+        int outputHeight) {
         this.beginPass(targetFramebuffer, outputWidth, outputHeight);
 
         try {
@@ -107,7 +109,8 @@ public final class Fsr1Upscaler {
         }
     }
 
-    private void renderRcasPass(Framebuffer sourceFramebuffer, Framebuffer targetFramebuffer, int outputWidth, int outputHeight) {
+    private void renderRcasPass(Framebuffer sourceFramebuffer, Framebuffer targetFramebuffer, int outputWidth,
+        int outputHeight) {
         this.beginPass(targetFramebuffer, outputWidth, outputHeight);
 
         try {
@@ -163,7 +166,8 @@ public final class Fsr1Upscaler {
         this.supportChecked = true;
 
         if (!isSupportedInCurrentContext()) {
-            this.logFallback("FSR1 requires OpenGL 4.2 with shader support and textureGather; falling back to linear upscaling.");
+            this.logFallback(
+                "FSR1 requires OpenGL 4.2 with shader support and textureGather; falling back to linear upscaling.");
             this.supported = false;
             return false;
         }
@@ -206,17 +210,9 @@ public final class Fsr1Upscaler {
         tessellator.draw();
     }
 
-    private static void fillEasuConstants(
-        int[] const0,
-        int[] const1,
-        int[] const2,
-        int[] const3,
-        float inputViewportWidth,
-        float inputViewportHeight,
-        float inputTextureWidth,
-        float inputTextureHeight,
-        float outputWidth,
-        float outputHeight) {
+    private static void fillEasuConstants(int[] const0, int[] const1, int[] const2, int[] const3,
+        float inputViewportWidth, float inputViewportHeight, float inputTextureWidth, float inputTextureHeight,
+        float outputWidth, float outputHeight) {
         const0[0] = floatBits(inputViewportWidth / outputWidth);
         const0[1] = floatBits(inputViewportHeight / outputHeight);
         const0[2] = floatBits(0.5F * inputViewportWidth / outputWidth - 0.5F);

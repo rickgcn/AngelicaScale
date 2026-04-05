@@ -1,5 +1,7 @@
 package com.rickg.angelicascale.client.gui.options;
 
+import net.minecraft.util.StatCollector;
+
 import com.google.common.collect.ImmutableList;
 import com.rickg.angelicascale.UpscaleAlgorithm;
 import com.rickg.angelicascale.client.gui.options.storage.AngelicaScaleOptionsStorage;
@@ -13,7 +15,6 @@ import me.jellysquid.mods.sodium.client.gui.options.control.ControlValueFormatte
 import me.jellysquid.mods.sodium.client.gui.options.control.CyclingControl;
 import me.jellysquid.mods.sodium.client.gui.options.control.SliderControl;
 import me.jellysquid.mods.sodium.client.gui.options.control.TickBoxControl;
-import net.minecraft.util.StatCollector;
 
 public final class AngelicaScaleOptionPage {
 
@@ -25,8 +26,8 @@ public final class AngelicaScaleOptionPage {
         AngelicaScaleOptionsStorage storage = new AngelicaScaleOptionsStorage();
         boolean fsrSupported = Fsr1Upscaler.isSupportedInCurrentContext();
         UpscaleAlgorithm[] availableAlgorithms = fsrSupported
-            ? new UpscaleAlgorithm[] {UpscaleAlgorithm.NEAREST, UpscaleAlgorithm.LINEAR, UpscaleAlgorithm.FSR1}
-            : new UpscaleAlgorithm[] {UpscaleAlgorithm.NEAREST, UpscaleAlgorithm.LINEAR};
+            ? new UpscaleAlgorithm[] { UpscaleAlgorithm.NEAREST, UpscaleAlgorithm.LINEAR, UpscaleAlgorithm.FSR1 }
+            : new UpscaleAlgorithm[] { UpscaleAlgorithm.NEAREST, UpscaleAlgorithm.LINEAR };
 
         OptionGroup.Builder group = OptionGroup.createBuilder()
             .add(
@@ -58,9 +59,7 @@ public final class AngelicaScaleOptionPage {
                             option,
                             UpscaleAlgorithm.class,
                             availableAlgorithms))
-                    .setBinding(
-                        (data, value) -> data.upscaleAlgorithm = value,
-                        data -> data.upscaleAlgorithm)
+                    .setBinding((data, value) -> data.upscaleAlgorithm = value, data -> data.upscaleAlgorithm)
                     .setImpact(OptionImpact.MEDIUM)
                     .build());
 

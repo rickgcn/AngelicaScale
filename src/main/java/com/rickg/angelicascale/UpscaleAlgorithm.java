@@ -3,6 +3,7 @@ package com.rickg.angelicascale;
 import net.minecraft.util.StatCollector;
 
 public enum UpscaleAlgorithm {
+
     NEAREST("Nearest", "angelicascale.algorithm.nearest"),
     LINEAR("Linear", "angelicascale.algorithm.linear"),
     FSR1("FSR1", "angelicascale.algorithm.fsr1");
@@ -27,7 +28,8 @@ public enum UpscaleAlgorithm {
 
     public static UpscaleAlgorithm fromConfigValue(String value) {
         for (UpscaleAlgorithm algorithm : values()) {
-            if (algorithm.name().equalsIgnoreCase(value) || algorithm.legacyDisplayName.equalsIgnoreCase(value)) {
+            if (algorithm.name()
+                .equalsIgnoreCase(value) || algorithm.legacyDisplayName.equalsIgnoreCase(value)) {
                 return algorithm;
             }
         }

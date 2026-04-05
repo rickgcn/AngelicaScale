@@ -41,12 +41,13 @@ public class Config {
                 MAX_WORLD_RENDER_SCALE)
             .getDouble(worldRenderScale);
 
-        upscaleAlgorithm = UpscaleAlgorithm.fromConfigValue(configuration.getString(
-            "upscaleAlgorithm",
-            Configuration.CATEGORY_GENERAL,
-            upscaleAlgorithm.name(),
-            "Selects how the low-resolution world image is upscaled back to the screen.",
-            UpscaleAlgorithm.configValues()));
+        upscaleAlgorithm = UpscaleAlgorithm.fromConfigValue(
+            configuration.getString(
+                "upscaleAlgorithm",
+                Configuration.CATEGORY_GENERAL,
+                upscaleAlgorithm.name(),
+                "Selects how the low-resolution world image is upscaled back to the screen.",
+                UpscaleAlgorithm.configValues()));
 
         fsrRcasSharpnessPercent = configuration.getInt(
             "fsrRcasSharpnessPercent",

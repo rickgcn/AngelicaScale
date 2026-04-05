@@ -1,8 +1,8 @@
 package com.rickg.angelicascale.client.upscale;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
@@ -87,7 +87,10 @@ public final class FsrShaderProgram {
         }
 
         this.uniform4Buffer.clear();
-        this.uniform4Buffer.put(values[0]).put(values[1]).put(values[2]).put(values[3]);
+        this.uniform4Buffer.put(values[0])
+            .put(values[1])
+            .put(values[2])
+            .put(values[3]);
         this.uniform4Buffer.flip();
         OpenGlHelper.func_153162_d(location, this.uniform4Buffer);
     }
@@ -191,7 +194,9 @@ public final class FsrShaderProgram {
         try {
             String source = readResource(normalizedPath);
             StringBuilder builder = new StringBuilder(source.length() + 256);
-            String[] lines = source.replace("\r\n", "\n").replace('\r', '\n').split("\n", -1);
+            String[] lines = source.replace("\r\n", "\n")
+                .replace('\r', '\n')
+                .split("\n", -1);
 
             for (String line : lines) {
                 String trimmed = line.trim();
@@ -200,7 +205,8 @@ public final class FsrShaderProgram {
                     String includeName = trimmed.substring("#include \"".length(), trimmed.length() - 1);
                     builder.append(this.loadShaderSource(resolveInclude(normalizedPath, includeName), includeStack));
                 } else {
-                    builder.append(line).append('\n');
+                    builder.append(line)
+                        .append('\n');
                 }
             }
 
