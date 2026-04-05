@@ -12,6 +12,8 @@ import org.lwjgl.opengl.GL11;
 
 import com.rickg.angelicascale.AngelicaScaleMod;
 import com.rickg.angelicascale.Config;
+import com.rickg.angelicascale.UpscaleAlgorithm;
+import com.rickg.angelicascale.client.upscale.Fsr1Upscaler;
 import com.rickg.angelicascale.mixin.MixinMinecraftAccessor;
 
 public final class RenderHookState {
@@ -34,6 +36,7 @@ public final class RenderHookState {
     private static Framebuffer scaledSceneFramebuffer;
     private static Framebuffer nativeMainFramebuffer;
     private static BackendMode activeMode = BackendMode.NONE;
+    private static final Fsr1Upscaler fsr1Upscaler = new Fsr1Upscaler();
 
     private static Method irisApiGetInstance;
     private static Method irisApiIsShaderPackInUse;
@@ -139,7 +142,9 @@ public final class RenderHookState {
             setViewport(0, 0, outputWidth, outputHeight);
 
             if (scaledSceneFramebuffer != null) {
-                scaledSceneFramebuffer.framebufferRender(outputWidth, outputHeight);
+                if (!renderScaledScene(outputFramebuffer, outputWidth, outputHeight)) {
+                    scaledSceneFramebuffer.framebufferRender(outputWidth, outputHeight);
+                }
             }
         } finally {
             activeMode = BackendMode.NONE;
@@ -170,15 +175,16 @@ public final class RenderHookState {
         if (scaledSceneFramebuffer == null) {
             scaledSceneFramebuffer = new Framebuffer(width, height, true);
             scaledSceneFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_LINEAR);
+            applyScaledFramebufferFilter();
             return;
         }
 
         if (scaledSceneFramebuffer.framebufferWidth != width || scaledSceneFramebuffer.framebufferHeight != height) {
             scaledSceneFramebuffer.createBindFramebuffer(width, height);
             scaledSceneFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_LINEAR);
         }
+
+        applyScaledFramebufferFilter();
     }
 
     public static void applyWorldViewport(int x, int y, int width, int height) {
@@ -193,6 +199,27 @@ public final class RenderHookState {
     private static void bindScaledSceneFramebuffer() {
         scaledSceneFramebuffer.bindFramebuffer(false);
         setViewport(0, 0, scaledViewportWidth, scaledViewportHeight);
+    }
+
+    private static boolean renderScaledScene(Framebuffer outputFramebuffer, int outputWidth, int outputHeight) {
+        if (Config.getUpscaleAlgorithm() != UpscaleAlgorithm.FSR1) {
+            return false;
+        }
+
+        if (!Fsr1Upscaler.isSupportedInCurrentContext()) {
+            return false;
+        }
+
+        return fsr1Upscaler.render(scaledSceneFramebuffer, outputFramebuffer, outputWidth, outputHeight);
+    }
+
+    private static void applyScaledFramebufferFilter() {
+        if (scaledSceneFramebuffer == null) {
+            return;
+        }
+
+        scaledSceneFramebuffer.setFramebufferFilter(
+            Config.getUpscaleAlgorithm() == UpscaleAlgorithm.NEAREST ? GL11.GL_NEAREST : GL11.GL_LINEAR);
     }
 
     private static void ensureIrisPipelineForScaledMain(int scaledWidth, int scaledHeight) {
