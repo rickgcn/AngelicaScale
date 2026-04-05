@@ -1,7 +1,8 @@
 package com.rickg.angelicascale;
 
-import me.jellysquid.mods.sodium.client.gui.options.named.NamedState;
 import net.minecraft.util.StatCollector;
+
+import me.jellysquid.mods.sodium.client.gui.options.named.NamedState;
 
 public enum UpscaleAlgorithm implements NamedState {
 
