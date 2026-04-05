@@ -38,8 +38,13 @@ public final class RenderHookState {
     private static Method irisApiGetInstance;
     private static Method irisApiIsShaderPackInUse;
     private static boolean irisLookupAttempted = false;
+    private static Method irisGetPipelineManager;
+    private static Method irisDestroyPipeline;
+    private static boolean irisPipelineLookupAttempted = false;
     private static Method angelicaGlViewport;
     private static boolean angelicaViewportLookupAttempted = false;
+    private static int irisPreparedWidth = -1;
+    private static int irisPreparedHeight = -1;
 
     private RenderHookState() {}
 
@@ -52,6 +57,7 @@ public final class RenderHookState {
 
     public static void onBeforeWorldRender(EntityRenderer renderer, float partialTicks) {
         if (!Config.isWorldScalingEnabled()) {
+            markIrisPipelineDirty();
             return;
         }
 
@@ -71,6 +77,7 @@ public final class RenderHookState {
                 loggedShaderBypass = true;
                 AngelicaScaleMod.LOG.info("Vanilla shader pipeline detected; render scaling bypassed.");
             }
+            markIrisPipelineDirty();
             return;
         }
 
@@ -79,6 +86,7 @@ public final class RenderHookState {
         int scaledHeight = Config.getScaledDimension(mc.displayHeight);
 
         if (scaledWidth >= mc.displayWidth && scaledHeight >= mc.displayHeight) {
+            markIrisPipelineDirty();
             return;
         }
 
@@ -91,6 +99,7 @@ public final class RenderHookState {
             nativeMainFramebuffer = mc.getFramebuffer();
             ((MixinMinecraftAccessor) mc).angelicascale$setFramebufferMc(scaledSceneFramebuffer);
             activeMode = BackendMode.IRIS_MAIN_SWAP;
+            ensureIrisPipelineForScaledMain(scaledWidth, scaledHeight);
             bindScaledSceneFramebuffer();
 
             if (!loggedIrisPipelineEnabled) {
@@ -121,12 +130,16 @@ public final class RenderHookState {
             if (activeMode == BackendMode.IRIS_MAIN_SWAP && nativeMainFramebuffer != null) {
                 ((MixinMinecraftAccessor) mc).angelicascale$setFramebufferMc(nativeMainFramebuffer);
             }
-            mc.getFramebuffer()
-                .bindFramebuffer(false);
-            setViewport(0, 0, mc.displayWidth, mc.displayHeight);
+
+            Framebuffer outputFramebuffer = nativeMainFramebuffer != null ? nativeMainFramebuffer : mc.getFramebuffer();
+            int outputWidth = outputFramebuffer.framebufferWidth;
+            int outputHeight = outputFramebuffer.framebufferHeight;
+
+            outputFramebuffer.bindFramebuffer(false);
+            setViewport(0, 0, outputWidth, outputHeight);
 
             if (scaledSceneFramebuffer != null) {
-                scaledSceneFramebuffer.framebufferRender(mc.displayWidth, mc.displayHeight);
+                scaledSceneFramebuffer.framebufferRender(outputWidth, outputHeight);
             }
         } finally {
             activeMode = BackendMode.NONE;
@@ -169,7 +182,7 @@ public final class RenderHookState {
     }
 
     public static void applyWorldViewport(int x, int y, int width, int height) {
-        if (activeMode != BackendMode.NONE && scaledViewportWidth > 0 && scaledViewportHeight > 0) {
+        if (activeMode == BackendMode.FIXED_FUNCTION && scaledViewportWidth > 0 && scaledViewportHeight > 0) {
             setViewport(x, y, scaledViewportWidth, scaledViewportHeight);
             return;
         }
@@ -180,6 +193,42 @@ public final class RenderHookState {
     private static void bindScaledSceneFramebuffer() {
         scaledSceneFramebuffer.bindFramebuffer(false);
         setViewport(0, 0, scaledViewportWidth, scaledViewportHeight);
+    }
+
+    private static void ensureIrisPipelineForScaledMain(int scaledWidth, int scaledHeight) {
+        if (irisPreparedWidth == scaledWidth && irisPreparedHeight == scaledHeight) {
+            return;
+        }
+
+        try {
+            if (!irisPipelineLookupAttempted) {
+                irisPipelineLookupAttempted = true;
+                Class<?> irisClass = Class.forName("net.coderbot.iris.Iris");
+                irisGetPipelineManager = irisClass.getMethod("getPipelineManager");
+                Class<?> pipelineManagerClass = Class.forName("net.coderbot.iris.pipeline.PipelineManager");
+                irisDestroyPipeline = pipelineManagerClass.getMethod("destroyPipeline");
+            }
+
+            if (irisGetPipelineManager == null || irisDestroyPipeline == null) {
+                return;
+            }
+
+            Object pipelineManager = irisGetPipelineManager.invoke(null);
+            irisDestroyPipeline.invoke(pipelineManager);
+            irisPreparedWidth = scaledWidth;
+            irisPreparedHeight = scaledHeight;
+            AngelicaScaleMod.LOG.info("Recreating Iris pipeline for scaled framebuffer {}x{}.", scaledWidth, scaledHeight);
+        } catch (ClassNotFoundException ignored) {
+            markIrisPipelineDirty();
+        } catch (ReflectiveOperationException e) {
+            markIrisPipelineDirty();
+            AngelicaScaleMod.LOG.debug("Failed to recreate Iris pipeline for scaled rendering.", e);
+        }
+    }
+
+    private static void markIrisPipelineDirty() {
+        irisPreparedWidth = -1;
+        irisPreparedHeight = -1;
     }
 
     private static void setViewport(int x, int y, int width, int height) {
