@@ -12,19 +12,28 @@ import org.lwjgl.opengl.GL11;
 
 import com.rickg.angelicascale.AngelicaScaleMod;
 import com.rickg.angelicascale.Config;
+import com.rickg.angelicascale.mixin.MixinMinecraftAccessor;
 
 public final class RenderHookState {
 
+    private enum BackendMode {
+        NONE,
+        FIXED_FUNCTION,
+        IRIS_MAIN_SWAP
+    }
+
     private static boolean initialized = false;
-    private static boolean renderOverrideActive = false;
     private static boolean loggedEnabled = false;
     private static boolean loggedShaderBypass = false;
     private static boolean loggedFramebufferBypass = false;
     private static boolean loggedPipelineRebind = false;
+    private static boolean loggedIrisPipelineEnabled = false;
     private static boolean loggedViewportFallback = false;
     private static int scaledViewportWidth = -1;
     private static int scaledViewportHeight = -1;
-    private static Framebuffer scaledWorldFramebuffer;
+    private static Framebuffer scaledSceneFramebuffer;
+    private static Framebuffer nativeMainFramebuffer;
+    private static BackendMode activeMode = BackendMode.NONE;
 
     private static Method irisApiGetInstance;
     private static Method irisApiIsShaderPackInUse;
@@ -54,10 +63,13 @@ public final class RenderHookState {
             return;
         }
 
-        if (isShaderPipelineActive(renderer)) {
+        boolean irisShaderPackInUse = isIrisShaderPackInUse();
+        ShaderGroup shaderGroup = renderer.theShaderGroup;
+
+        if (!irisShaderPackInUse && shaderGroup != null) {
             if (!loggedShaderBypass) {
                 loggedShaderBypass = true;
-                AngelicaScaleMod.LOG.info("Shader pipeline detected; render scaling bypassed.");
+                AngelicaScaleMod.LOG.info("Vanilla shader pipeline detected; render scaling bypassed.");
             }
             return;
         }
@@ -74,8 +86,22 @@ public final class RenderHookState {
 
         scaledViewportWidth = scaledWidth;
         scaledViewportHeight = scaledHeight;
-        bindScaledWorldFramebuffer();
-        renderOverrideActive = true;
+
+        if (irisShaderPackInUse) {
+            nativeMainFramebuffer = mc.getFramebuffer();
+            ((MixinMinecraftAccessor) mc).angelicascale$setFramebufferMc(scaledSceneFramebuffer);
+            activeMode = BackendMode.IRIS_MAIN_SWAP;
+            bindScaledSceneFramebuffer();
+
+            if (!loggedIrisPipelineEnabled) {
+                loggedIrisPipelineEnabled = true;
+                AngelicaScaleMod.LOG
+                    .info("Iris shader pipeline detected; swapping main framebuffer for render scaling.");
+            }
+        } else {
+            activeMode = BackendMode.FIXED_FUNCTION;
+            bindScaledSceneFramebuffer();
+        }
 
         if (!loggedEnabled) {
             loggedEnabled = true;
@@ -85,29 +111,39 @@ public final class RenderHookState {
     }
 
     public static void onAfterWorldRender(EntityRenderer renderer, float partialTicks) {
-        if (!renderOverrideActive) {
+        if (activeMode == BackendMode.NONE) {
             return;
         }
 
         Minecraft mc = Minecraft.getMinecraft();
-        mc.getFramebuffer()
-            .bindFramebuffer(false);
-        setViewport(0, 0, mc.displayWidth, mc.displayHeight);
-        scaledWorldFramebuffer.framebufferRender(mc.displayWidth, mc.displayHeight);
 
-        renderOverrideActive = false;
-        scaledViewportWidth = -1;
-        scaledViewportHeight = -1;
+        try {
+            if (activeMode == BackendMode.IRIS_MAIN_SWAP && nativeMainFramebuffer != null) {
+                ((MixinMinecraftAccessor) mc).angelicascale$setFramebufferMc(nativeMainFramebuffer);
+            }
+            mc.getFramebuffer()
+                .bindFramebuffer(false);
+            setViewport(0, 0, mc.displayWidth, mc.displayHeight);
+
+            if (scaledSceneFramebuffer != null) {
+                scaledSceneFramebuffer.framebufferRender(mc.displayWidth, mc.displayHeight);
+            }
+        } finally {
+            activeMode = BackendMode.NONE;
+            nativeMainFramebuffer = null;
+            scaledViewportWidth = -1;
+            scaledViewportHeight = -1;
+        }
     }
 
     public static boolean rebindScaledWorldFramebufferForFixedPipeline() {
-        if (!renderOverrideActive || scaledWorldFramebuffer == null
+        if (activeMode != BackendMode.FIXED_FUNCTION || scaledSceneFramebuffer == null
             || scaledViewportWidth <= 0
             || scaledViewportHeight <= 0) {
             return false;
         }
 
-        bindScaledWorldFramebuffer();
+        bindScaledSceneFramebuffer();
 
         if (!loggedPipelineRebind) {
             loggedPipelineRebind = true;
@@ -118,27 +154,22 @@ public final class RenderHookState {
     }
 
     private static void ensureFramebuffer(int width, int height) {
-        if (scaledWorldFramebuffer == null) {
-            scaledWorldFramebuffer = new Framebuffer(width, height, true);
-            scaledWorldFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            scaledWorldFramebuffer.setFramebufferFilter(GL11.GL_NEAREST);
+        if (scaledSceneFramebuffer == null) {
+            scaledSceneFramebuffer = new Framebuffer(width, height, true);
+            scaledSceneFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
+            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_NEAREST);
             return;
         }
 
-        if (scaledWorldFramebuffer.framebufferWidth != width || scaledWorldFramebuffer.framebufferHeight != height) {
-            scaledWorldFramebuffer.createBindFramebuffer(width, height);
-            scaledWorldFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            scaledWorldFramebuffer.setFramebufferFilter(GL11.GL_NEAREST);
+        if (scaledSceneFramebuffer.framebufferWidth != width || scaledSceneFramebuffer.framebufferHeight != height) {
+            scaledSceneFramebuffer.createBindFramebuffer(width, height);
+            scaledSceneFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
+            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_NEAREST);
         }
     }
 
-    private static boolean isShaderPipelineActive(EntityRenderer renderer) {
-        ShaderGroup shaderGroup = renderer.theShaderGroup;
-        return shaderGroup != null || isIrisShaderPackInUse();
-    }
-
     public static void applyWorldViewport(int x, int y, int width, int height) {
-        if (renderOverrideActive && scaledViewportWidth > 0 && scaledViewportHeight > 0) {
+        if (activeMode != BackendMode.NONE && scaledViewportWidth > 0 && scaledViewportHeight > 0) {
             setViewport(x, y, scaledViewportWidth, scaledViewportHeight);
             return;
         }
@@ -146,8 +177,8 @@ public final class RenderHookState {
         setViewport(x, y, width, height);
     }
 
-    private static void bindScaledWorldFramebuffer() {
-        scaledWorldFramebuffer.bindFramebuffer(false);
+    private static void bindScaledSceneFramebuffer() {
+        scaledSceneFramebuffer.bindFramebuffer(false);
         setViewport(0, 0, scaledViewportWidth, scaledViewportHeight);
     }
 

@@ -3,31 +3,28 @@ package com.rickg.angelicascale.mixin;
 import net.minecraft.client.renderer.EntityRenderer;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.rickg.angelicascale.client.RenderHookState;
 
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer {
 
-    @Inject(
+    @Shadow
+    public abstract void renderWorld(float partialTicks, long finishTimeNano);
+
+    @Redirect(
         method = "updateCameraAndRender",
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;renderWorld(FJ)V"))
-    private void angelicascale$beforeWorldRender(float partialTicks, CallbackInfo ci) {
+    private void angelicascale$wrapWorldRender(EntityRenderer instance, float partialTicks, long finishTimeNano) {
         RenderHookState.onBeforeWorldRender((EntityRenderer) (Object) this, partialTicks);
-    }
-
-    @Inject(
-        method = "updateCameraAndRender",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/EntityRenderer;renderWorld(FJ)V",
-            shift = At.Shift.AFTER))
-    private void angelicascale$afterWorldRender(float partialTicks, CallbackInfo ci) {
-        RenderHookState.onAfterWorldRender((EntityRenderer) (Object) this, partialTicks);
+        try {
+            this.renderWorld(partialTicks, finishTimeNano);
+        } finally {
+            RenderHookState.onAfterWorldRender((EntityRenderer) (Object) this, partialTicks);
+        }
     }
 
     @Redirect(
