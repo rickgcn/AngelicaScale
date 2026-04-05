@@ -170,14 +170,14 @@ public final class RenderHookState {
         if (scaledSceneFramebuffer == null) {
             scaledSceneFramebuffer = new Framebuffer(width, height, true);
             scaledSceneFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_NEAREST);
+            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_LINEAR);
             return;
         }
 
         if (scaledSceneFramebuffer.framebufferWidth != width || scaledSceneFramebuffer.framebufferHeight != height) {
             scaledSceneFramebuffer.createBindFramebuffer(width, height);
             scaledSceneFramebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_NEAREST);
+            scaledSceneFramebuffer.setFramebufferFilter(GL11.GL_LINEAR);
         }
     }
 
