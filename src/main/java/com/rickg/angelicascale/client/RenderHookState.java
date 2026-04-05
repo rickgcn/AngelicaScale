@@ -217,7 +217,8 @@ public final class RenderHookState {
             irisDestroyPipeline.invoke(pipelineManager);
             irisPreparedWidth = scaledWidth;
             irisPreparedHeight = scaledHeight;
-            AngelicaScaleMod.LOG.info("Recreating Iris pipeline for scaled framebuffer {}x{}.", scaledWidth, scaledHeight);
+            AngelicaScaleMod.LOG
+                .info("Recreating Iris pipeline for scaled framebuffer {}x{}.", scaledWidth, scaledHeight);
         } catch (ClassNotFoundException ignored) {
             markIrisPipelineDirty();
         } catch (ReflectiveOperationException e) {
