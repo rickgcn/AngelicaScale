@@ -9,6 +9,7 @@
   "client": [
     "MixinEntityRenderer",
     "MixinFixedFunctionWorldRenderingPipeline",
+    "MixinMinecraftAccessor",
     "MixinSodiumOptionsGUI"
   ],
   "server": []
