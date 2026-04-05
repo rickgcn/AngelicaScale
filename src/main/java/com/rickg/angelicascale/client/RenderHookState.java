@@ -36,6 +36,7 @@ public final class RenderHookState {
     private static Framebuffer scaledSceneFramebuffer;
     private static Framebuffer nativeMainFramebuffer;
     private static BackendMode activeMode = BackendMode.NONE;
+    private static boolean irisScaledPipelineActive = false;
     private static final Fsr1Upscaler fsr1Upscaler = new Fsr1Upscaler();
 
     private static Method irisApiGetInstance;
@@ -60,6 +61,7 @@ public final class RenderHookState {
 
     public static void onBeforeWorldRender(EntityRenderer renderer, float partialTicks) {
         if (!Config.isWorldScalingEnabled()) {
+            restoreNativeIrisPipelineIfNeeded();
             markIrisPipelineDirty();
             return;
         }
@@ -69,6 +71,8 @@ public final class RenderHookState {
                 loggedFramebufferBypass = true;
                 AngelicaScaleMod.LOG.warn("Framebuffer unsupported; render scaling disabled.");
             }
+            restoreNativeIrisPipelineIfNeeded();
+            markIrisPipelineDirty();
             return;
         }
 
@@ -80,6 +84,7 @@ public final class RenderHookState {
                 loggedShaderBypass = true;
                 AngelicaScaleMod.LOG.info("Vanilla shader pipeline detected; render scaling bypassed.");
             }
+            restoreNativeIrisPipelineIfNeeded();
             markIrisPipelineDirty();
             return;
         }
@@ -89,6 +94,7 @@ public final class RenderHookState {
         int scaledHeight = Config.getScaledDimension(mc.displayHeight);
 
         if (scaledWidth >= mc.displayWidth && scaledHeight >= mc.displayHeight) {
+            restoreNativeIrisPipelineIfNeeded();
             markIrisPipelineDirty();
             return;
         }
@@ -111,6 +117,8 @@ public final class RenderHookState {
                     .info("Iris shader pipeline detected; swapping main framebuffer for render scaling.");
             }
         } else {
+            restoreNativeIrisPipelineIfNeeded();
+            markIrisPipelineDirty();
             activeMode = BackendMode.FIXED_FUNCTION;
             bindScaledSceneFramebuffer();
         }
@@ -223,7 +231,7 @@ public final class RenderHookState {
     }
 
     private static void ensureIrisPipelineForScaledMain(int scaledWidth, int scaledHeight) {
-        if (irisPreparedWidth == scaledWidth && irisPreparedHeight == scaledHeight) {
+        if (irisScaledPipelineActive && irisPreparedWidth == scaledWidth && irisPreparedHeight == scaledHeight) {
             return;
         }
 
@@ -244,6 +252,7 @@ public final class RenderHookState {
             irisDestroyPipeline.invoke(pipelineManager);
             irisPreparedWidth = scaledWidth;
             irisPreparedHeight = scaledHeight;
+            irisScaledPipelineActive = true;
             AngelicaScaleMod.LOG
                 .info("Recreating Iris pipeline for scaled framebuffer {}x{}.", scaledWidth, scaledHeight);
         } catch (ClassNotFoundException ignored) {
@@ -251,6 +260,49 @@ public final class RenderHookState {
         } catch (ReflectiveOperationException e) {
             markIrisPipelineDirty();
             AngelicaScaleMod.LOG.debug("Failed to recreate Iris pipeline for scaled rendering.", e);
+        }
+    }
+
+    private static void restoreNativeIrisPipelineIfNeeded() {
+        if (!irisScaledPipelineActive) {
+            return;
+        }
+
+        try {
+            if (!irisPipelineLookupAttempted) {
+                irisPipelineLookupAttempted = true;
+                Class<?> irisClass = Class.forName("net.coderbot.iris.Iris");
+                irisGetPipelineManager = irisClass.getMethod("getPipelineManager");
+                Class<?> pipelineManagerClass = Class.forName("net.coderbot.iris.pipeline.PipelineManager");
+                irisDestroyPipeline = pipelineManagerClass.getMethod("destroyPipeline");
+            }
+
+            if (irisGetPipelineManager == null || irisDestroyPipeline == null) {
+                return;
+            }
+
+            Object pipelineManager = irisGetPipelineManager.invoke(null);
+            irisDestroyPipeline.invoke(pipelineManager);
+
+            Minecraft mc = Minecraft.getMinecraft();
+            Framebuffer framebuffer = mc != null ? mc.getFramebuffer() : null;
+
+            if (framebuffer != null) {
+                AngelicaScaleMod.LOG.info(
+                    "Restoring Iris pipeline for native framebuffer {}x{}.",
+                    framebuffer.framebufferWidth,
+                    framebuffer.framebufferHeight);
+            } else {
+                AngelicaScaleMod.LOG.info("Restoring Iris pipeline for native framebuffer.");
+            }
+
+            irisScaledPipelineActive = false;
+        } catch (ClassNotFoundException ignored) {
+            irisScaledPipelineActive = false;
+        } catch (ReflectiveOperationException e) {
+            AngelicaScaleMod.LOG.debug("Failed to restore Iris pipeline for native rendering.", e);
+        } finally {
+            markIrisPipelineDirty();
         }
     }
 
