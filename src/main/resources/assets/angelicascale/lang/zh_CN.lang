@@ -1,0 +1,12 @@
+angelicascale.options.page=缩放
+angelicascale.options.enable_world_render_scaling.name=启用世界渲染缩放
+angelicascale.options.enable_world_render_scaling.tooltip=以较低的内部分辨率渲染3D世界，同时保持界面以原生分辨率显示。
+angelicascale.options.world_render_scale.name=世界渲染比例
+angelicascale.options.world_render_scale.tooltip=控制3D世界内部渲染分辨率。较低值可提高性能但会降低图像清晰度。
+angelicascale.options.upscale_algorithm.name=放大算法
+angelicascale.options.upscale_algorithm.tooltip=选择低分辨率世界图像放大至屏幕显示的方式。
+angelicascale.options.rcas_sharpness.name=RCAS锐度
+angelicascale.options.rcas_sharpness.tooltip=控制FSR1使用的额外锐化处理强度。设为0可禁用RCAS功能。
+angelicascale.algorithm.nearest=最近邻
+angelicascale.algorithm.linear=线性
+angelicascale.algorithm.fsr1=FSR1

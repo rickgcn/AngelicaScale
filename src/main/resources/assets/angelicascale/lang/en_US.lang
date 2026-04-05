@@ -1,0 +1,12 @@
+angelicascale.options.page=Scale
+angelicascale.options.enable_world_render_scaling.name=Enable World Render Scaling
+angelicascale.options.enable_world_render_scaling.tooltip=Renders the 3D world at a lower internal resolution while keeping the GUI at native resolution.
+angelicascale.options.world_render_scale.name=World Render Scale
+angelicascale.options.world_render_scale.tooltip=Controls the internal 3D world rendering resolution. Lower values improve performance but reduce image sharpness.
+angelicascale.options.upscale_algorithm.name=Upscale Algorithm
+angelicascale.options.upscale_algorithm.tooltip=Selects how the low-resolution world image is upscaled back to the screen.
+angelicascale.options.rcas_sharpness.name=RCAS Sharpness
+angelicascale.options.rcas_sharpness.tooltip=Controls the extra sharpening pass used by FSR1. 0 disables RCAS.
+angelicascale.algorithm.nearest=Nearest
+angelicascale.algorithm.linear=Linear
+angelicascale.algorithm.fsr1=FSR1
